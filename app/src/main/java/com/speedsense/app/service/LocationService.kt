@@ -14,8 +14,10 @@ import com.speedsense.app.matching.RoadMatcher
 import com.speedsense.app.vibration.VibrationManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class LocationService : Service() {
@@ -28,6 +30,7 @@ class LocationService : Service() {
     private var isTracking = false
     private var lastDetectedRoadId: String? = null
     private var lastSpeedLimit: Int? = null
+    private var repeatVibrationJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -92,6 +95,7 @@ class LocationService : Service() {
                     lastSpeedLimit = match.speedLimit
                     vibrationManager.vibrateForSpeedLimit(match.speedLimit)
                     LocationNotificationManager.updateNotification(this@LocationService, match.speedLimit)
+                    startRepeatingVibration(match.speedLimit)
                 }
 
                 MonitoringStateStore.updateMatch(match.speedLimit, match.roadName)
@@ -106,11 +110,32 @@ class LocationService : Service() {
         MonitoringStateStore.reset()
     }
 
+    private fun startRepeatingVibration(speedLimit: Int) {
+        repeatVibrationJob?.cancel()
+        repeatVibrationJob = serviceScope.launch {
+            while (true) {
+                delay(VIBRATION_REPEAT_INTERVAL_MS)
+                if (lastSpeedLimit == speedLimit) {
+                    vibrationManager.vibrateForSpeedLimit(speedLimit)
+                } else {
+                    break
+                }
+            }
+        }
+    }
+
+    private fun stopRepeatingVibration() {
+        repeatVibrationJob?.cancel()
+        repeatVibrationJob = null
+        vibrationManager.cancel()
+    }
+
     private fun stopLocationUpdates() {
         if (!isTracking) {
             return
         }
         isTracking = false
+        stopRepeatingVibration()
         locationClient.stopLocationUpdates()
     }
 
@@ -124,6 +149,7 @@ class LocationService : Service() {
     companion object {
         private const val ACTION_START = "com.speedsense.app.action.START"
         private const val ACTION_STOP = "com.speedsense.app.action.STOP"
+        private const val VIBRATION_REPEAT_INTERVAL_MS = 5_000L
 
         fun start(context: Context) {
             val intent = Intent(context, LocationService::class.java).apply {
