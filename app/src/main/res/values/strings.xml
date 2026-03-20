@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SpeedSense</string>
+    <string name="subtitle">Offline speed limit alerts using GPS, local road matching, and haptic feedback.</string>
+    <string name="current_speed_limit_label">Current detected speed limit</string>
+    <string name="no_speed_limit">-- mph</string>
+    <string name="no_road_detected">No road detected yet</string>
+    <string name="status_idle">Monitoring is stopped</string>
+    <string name="status_active">Speed monitoring active</string>
+    <string name="status_waiting">Waiting for a road match</string>
+    <string name="start_monitoring">Start Monitoring</string>
+    <string name="stop_monitoring">Stop Monitoring</string>
+    <string name="notification_title">Speed monitoring active</string>
+    <string name="notification_text_idle">Listening for location updates</string>
+    <string name="permission_location_required">Precise location permission is required to monitor speed limits accurately.</string>
+    <string name="permission_background_required">Background location is required so monitoring can continue when the app is closed.</string>
+    <string name="foreground_location_rationale">SpeedSense needs precise location access to match your GPS position to nearby roads accurately.</string>
+    <string name="background_location_rationale">Allow all the time location access so the foreground service keeps working while the app is in the background.</string>
+    <string name="notification_permission_rationale">Allow notifications so Android can display the persistent monitoring notification.</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="cancel">Cancel</string>
+    <string name="road_name_format">Road: %1$s</string>
+    <string name="speed_limit_format">%1$d mph</string>
+    <string name="notification_speed_limit_format">Current limit: %1$d mph</string>
+    <string name="settings_instruction">On Android 11 and above, background location must be enabled from the app settings screen.</string>
+    <string name="no_speed">Speed: --</string>
+    <string name="current_speed_format">Speed: %.0f mph</string>
+    <string name="no_coordinates">GPS: --</string>
+    <string name="coordinates_format">GPS: %.6f, %.6f</string>
+    <string name="no_time">Updated: --</string>
+    <string name="time_format">Updated: %1$s</string>
+    <string name="test_vibration_label">Test vibration patterns</string>
+    <string name="test_vibration_hint">Tap a speed limit to feel its vibration pattern</string>
+    <string name="test_20">20 mph</string>
+    <string name="test_30">30 mph</string>
+    <string name="test_40">40 mph</string>
+    <string name="test_50">50 mph</string>
+    <string name="test_60">60 mph</string>
+    <string name="test_70">70 mph</string>
+</resources>
