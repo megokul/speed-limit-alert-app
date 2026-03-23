@@ -9,6 +9,7 @@ import android.os.IBinder
 import androidx.core.content.ContextCompat
 import com.speedsense.app.R
 import com.speedsense.app.data.RoadRepository
+import com.speedsense.app.data.SpeedLimitOverrides
 import com.speedsense.app.location.LocationClient
 import com.speedsense.app.matching.RoadMatcher
 import com.speedsense.app.vibration.VibrationManager
@@ -43,6 +44,7 @@ class LocationService : Service() {
         when (intent?.action ?: ACTION_START) {
             ACTION_START -> startMonitoring()
             ACTION_STOP -> stopMonitoring()
+            ACTION_RELOAD_ROADS -> reloadRoadMatcher()
         }
         return START_STICKY
     }
@@ -88,17 +90,22 @@ class LocationService : Service() {
                     timeMs = System.currentTimeMillis(),
                 )
 
-                val match = roadMatcher.findNearestRoad(location) ?: return@launch
-                lastDetectedRoadId = match.roadId
-
-                if (match.speedLimit != lastSpeedLimit) {
-                    lastSpeedLimit = match.speedLimit
-                    vibrationManager.vibrateForSpeedLimit(match.speedLimit)
-                    LocationNotificationManager.updateNotification(this@LocationService, match.speedLimit)
-                    startRepeatingVibration(match.speedLimit)
+                if (RoadRecordingStore.isRecording()) {
+                    RoadRecordingStore.addPoint(location.latitude, location.longitude)
                 }
 
-                MonitoringStateStore.updateMatch(match.speedLimit, match.roadName)
+                val match = roadMatcher.findNearestRoad(location) ?: return@launch
+                lastDetectedRoadId = match.roadId
+                val effectiveLimit = SpeedLimitOverrides.getOverride(match.roadId) ?: match.speedLimit
+
+                if (effectiveLimit != lastSpeedLimit) {
+                    lastSpeedLimit = effectiveLimit
+                    vibrationManager.vibrateForSpeedLimit(effectiveLimit)
+                    LocationNotificationManager.updateNotification(this@LocationService, effectiveLimit)
+                    startRepeatingVibration(effectiveLimit)
+                }
+
+                MonitoringStateStore.updateMatch(effectiveLimit, match.roadId, match.roadName)
             }
         }
     }
@@ -124,19 +131,20 @@ class LocationService : Service() {
         }
     }
 
-    private fun stopRepeatingVibration() {
-        repeatVibrationJob?.cancel()
-        repeatVibrationJob = null
-        vibrationManager.cancel()
-    }
-
     private fun stopLocationUpdates() {
         if (!isTracking) {
             return
         }
         isTracking = false
-        stopRepeatingVibration()
+        repeatVibrationJob?.cancel()
+        repeatVibrationJob = null
+        vibrationManager.cancel()
         locationClient.stopLocationUpdates()
+    }
+
+    private fun reloadRoadMatcher() {
+        RoadRepository.reload(applicationContext)
+        roadMatcher = RoadRepository.getMatcher(applicationContext)
     }
 
     private fun hasLocationPermission(): Boolean {
@@ -149,6 +157,7 @@ class LocationService : Service() {
     companion object {
         private const val ACTION_START = "com.speedsense.app.action.START"
         private const val ACTION_STOP = "com.speedsense.app.action.STOP"
+        private const val ACTION_RELOAD_ROADS = "com.speedsense.app.action.RELOAD_ROADS"
         private const val VIBRATION_REPEAT_INTERVAL_MS = 5_000L
 
         fun start(context: Context) {
@@ -161,6 +170,13 @@ class LocationService : Service() {
         fun stop(context: Context) {
             val intent = Intent(context, LocationService::class.java).apply {
                 action = ACTION_STOP
+            }
+            context.startService(intent)
+        }
+
+        fun reloadRoads(context: Context) {
+            val intent = Intent(context, LocationService::class.java).apply {
+                action = ACTION_RELOAD_ROADS
             }
             context.startService(intent)
         }

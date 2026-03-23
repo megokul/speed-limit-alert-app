@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.update
 data class MonitoringState(
     val isMonitoring: Boolean = false,
     val currentSpeedLimit: Int? = null,
+    val currentRoadId: String? = null,
     val currentRoadName: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
@@ -37,10 +38,11 @@ object MonitoringStateStore {
         }
     }
 
-    fun updateMatch(speedLimit: Int, roadName: String) {
+    fun updateMatch(speedLimit: Int, roadId: String, roadName: String) {
         mutableState.update { current ->
             current.copy(
                 currentSpeedLimit = speedLimit,
+                currentRoadId = roadId,
                 currentRoadName = roadName,
                 errorMessage = null,
             )

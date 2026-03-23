@@ -23,24 +23,16 @@ class VibrationManager(
             return
         }
 
-        // Each speed limit has a distinct pattern:
-        // 20: single short tap
-        // 30: two quick taps
-        // 40: one long buzz
-        // 50: long buzz + short tap
-        // 60: three slow heavy pulses with ramp-down
-        // 70: two long buzzes
+        // 20=2 short, 30=3 short, 40=4 short
+        // 50=1 long, 60=2 long, 70=3 long
         val effect = when (speedLimit) {
-            20 -> waveform(longArrayOf(0, 120), intArrayOf(0, 255))
-            30 -> waveform(longArrayOf(0, 80, 80, 80), intArrayOf(0, 255, 0, 255))
-            40 -> waveform(longArrayOf(0, 350), intArrayOf(0, 255))
-            50 -> waveform(longArrayOf(0, 280, 120, 100), intArrayOf(0, 255, 0, 200))
-            60 -> waveform(
-                longArrayOf(0, 200, 150, 200, 150, 200),
-                intArrayOf(0, 255, 0, 180, 0, 100),
-            )
-            70 -> waveform(longArrayOf(0, 300, 120, 300), intArrayOf(0, 255, 0, 255))
-            else -> VibrationEffect.createOneShot(140, VibrationEffect.DEFAULT_AMPLITUDE)
+            20 -> waveform(longArrayOf(0, 200, 200, 200), intArrayOf(0, 255, 0, 255))
+            30 -> waveform(longArrayOf(0, 200, 200, 200, 200, 200), intArrayOf(0, 255, 0, 255, 0, 255))
+            40 -> waveform(longArrayOf(0, 200, 200, 200, 200, 200, 200, 200), intArrayOf(0, 255, 0, 255, 0, 255, 0, 255))
+            50 -> waveform(longArrayOf(0, 500), intArrayOf(0, 255))
+            60 -> waveform(longArrayOf(0, 500, 300, 500), intArrayOf(0, 255, 0, 255))
+            70 -> waveform(longArrayOf(0, 500, 300, 500, 300, 500), intArrayOf(0, 255, 0, 255, 0, 255))
+            else -> VibrationEffect.createOneShot(200, 255)
         }
 
         deviceVibrator.vibrate(effect)

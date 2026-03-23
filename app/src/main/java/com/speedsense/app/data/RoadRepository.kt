@@ -17,10 +17,18 @@ object RoadRepository {
 
         synchronized(this) {
             if (cachedRoads == null || matcher == null) {
-                val roads = JsonLoader.loadRoads(context.applicationContext)
+                val roads = buildMergedRoads(context)
                 cachedRoads = roads
                 matcher = RoadMatcher(roads)
             }
+        }
+    }
+
+    fun reload(context: Context) {
+        synchronized(this) {
+            val roads = buildMergedRoads(context)
+            cachedRoads = roads
+            matcher = RoadMatcher(roads)
         }
     }
 
@@ -33,5 +41,17 @@ object RoadRepository {
         initialize(context)
         return cachedRoads.orEmpty()
     }
-}
 
+    private fun buildMergedRoads(context: Context): List<Road> {
+        val mergedRoads = LinkedHashMap<String, Road>()
+
+        JsonLoader.loadRoads(context.applicationContext).forEach { road ->
+            mergedRoads[road.roadId] = road
+        }
+        UserRoadStorage.loadUserRoads().forEach { road ->
+            mergedRoads[road.roadId] = road
+        }
+
+        return mergedRoads.values.toList()
+    }
+}
